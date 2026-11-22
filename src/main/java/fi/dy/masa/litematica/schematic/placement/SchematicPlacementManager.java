@@ -40,6 +40,9 @@ import fi.dy.masa.litematica.render.LitematicaRenderer;
 import fi.dy.masa.litematica.render.OverlayRenderer;
 import fi.dy.masa.litematica.render.infohud.StatusInfoRenderer;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkBase;
+import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkCommand;
+import fi.dy.masa.litematica.scheduler.tasks.TaskPasteSchematicPerChunkDirect;
 import fi.dy.masa.litematica.schematic.LitematicaSchematic;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement.RequiredEnabled;
 import fi.dy.masa.litematica.util.*;
@@ -755,34 +758,49 @@ public class SchematicPlacementManager
         this.pastePlacementToWorld(schematicPlacement, changedBlocksOnly, true, mc);
     }
 
-    private static class PasteToCommandsListener implements IConfirmationListener
-    {
-        private final SchematicPlacement schematicPlacement;
-        private final boolean changedBlocksOnly;
-
-        public PasteToCommandsListener(SchematicPlacement schematicPlacement, boolean changedBlocksOnly)
-        {
-            this.schematicPlacement = schematicPlacement;
-            this.changedBlocksOnly = changedBlocksOnly;
-        }
-
-        @Override
-        public boolean onActionConfirmed()
-        {
-    fi.dy.masa.litematica.util.AuditedBuild.refuse("paste to mcfunction");
-    return true;
-}
-
-        @Override
-        public boolean onActionCancelled()
-        {
-            return true;
-        }
-    }
-
+    /**
+     * Audited fork (Task 14): Litematica's creative paste, restored as an opt-in manual tool. Only on the player's own
+     * action (hotkey, tool menu, project paste), only with {@code commandToolsEnabled}, in creative and with operator permission
+     * ({@link CommandToolGate}); never called by the printer or Overseer. On a server it sends vanilla setblock / fill /
+     * clone / summon / data commands at {@code commandLimitPerTick}; in single player it writes the integrated world
+     * directly unless {@code pasteUsingCommandsInSp}. No paste-to-mcfunction, no Servux, no game-rule or Carpet commands.
+     */
     public void pastePlacementToWorld(final SchematicPlacement schematicPlacement, boolean changedBlocksOnly, boolean printMessage, MinecraftClient mc)
     {
-        fi.dy.masa.litematica.util.AuditedBuild.refuse("paste");
+        if (CommandToolGate.allowedNow(mc, "paste") == false)
+        {
+            return;
+        }
+
+        if (schematicPlacement == null)
+        {
+            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_placement_selected");
+            return;
+        }
+
+        if (!schematicPlacement.isEnabled())
+        {
+            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.placement_paste_rendering_disabled");
+            return;
+        }
+
+        LayerRange range = DataManager.getRenderLayerRange();
+
+        if (mc.isIntegratedServerRunning() == false || Configs.Generic.PASTE_USING_COMMANDS_IN_SP.getBooleanValue())
+        {
+            TaskPasteSchematicPerChunkBase task = new TaskPasteSchematicPerChunkCommand(Collections.singletonList(schematicPlacement), range, changedBlocksOnly);
+            TaskScheduler.getInstanceClient().scheduleTask(task, Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue());
+        }
+        else
+        {
+            TaskPasteSchematicPerChunkBase task = new TaskPasteSchematicPerChunkDirect(Collections.singletonList(schematicPlacement), range, changedBlocksOnly);
+            TaskScheduler.getInstanceServer().scheduleTask(task, Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue());
+        }
+
+        if (printMessage)
+        {
+            InfoUtils.showGuiOrActionBarMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
+        }
     }
 
     public void clear()

@@ -48,16 +48,10 @@ public class Configs implements IConfigHandler
 //        public static final ConfigBoolean       BETTER_RENDER_ORDER         = new ConfigBoolean("betterRenderOrder", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       CHANGE_SELECTED_CORNER      = new ConfigBoolean("changeSelectedCornerOnMove", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       CLONE_AT_ORIGINAL_POS       = new ConfigBoolean("cloneAtOriginalPosition", false).apply(GENERIC_KEY);
-        public static final ConfigBoolean       COMMAND_DISABLE_FEEDBACK    = new ConfigBoolean("commandDisableFeedback", true).apply(GENERIC_KEY);
         public static final ConfigInteger       COMMAND_FILL_MAX_VOLUME     = new ConfigInteger("commandFillMaxVolume", 32768, 256, 10000000).apply(GENERIC_KEY);
         public static final ConfigBoolean       COMMAND_FILL_NO_CHUNK_CLAMP = new ConfigBoolean("commandFillNoChunkClamp", false).apply(GENERIC_KEY);
         public static final ConfigInteger       COMMAND_LIMIT               = new ConfigInteger("commandLimitPerTick", 8, 1, 256).apply(GENERIC_KEY);
-        public static final ConfigString        COMMAND_NAME_CLONE          = new ConfigString( "commandNameClone", "clone").apply(GENERIC_KEY);
-        public static final ConfigString        COMMAND_NAME_FILL           = new ConfigString( "commandNameFill", "fill").apply(GENERIC_KEY);
-        public static final ConfigString        COMMAND_NAME_SETBLOCK       = new ConfigString( "commandNameSetblock", "setblock").apply(GENERIC_KEY);
-        public static final ConfigString        COMMAND_NAME_SUMMON         = new ConfigString( "commandNameSummon", "summon").apply(GENERIC_KEY);
         public static final ConfigInteger       COMMAND_TASK_INTERVAL       = new ConfigInteger("commandTaskInterval", 1, 1, 1000).apply(GENERIC_KEY);
-        public static final ConfigBoolean       COMMAND_USE_WORLDEDIT       = new ConfigBoolean("commandUseWorldEdit", false).apply(GENERIC_KEY);
 //        public static final ConfigBoolean       COMMAND_USE_STRICT          = new ConfigBoolean("commandUseStrict", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       DEBUG_LOGGING               = new ConfigBoolean("debugLogging", false).apply(GENERIC_KEY);
         public static final ConfigOptionList    DATAFIXER_MODE              = new ConfigOptionList("datafixerMode", DataFixerMode.ALWAYS).apply(GENERIC_KEY);
@@ -93,7 +87,8 @@ public class Configs implements IConfigHandler
         public static final ConfigBoolean       PASTE_IGNORE_CMD_LIMIT      = new ConfigBoolean("pasteIgnoreCommandLimitWithNbtRestore", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       PASTE_IGNORE_ENTITIES       = new ConfigBoolean("pasteIgnoreEntities", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       PASTE_IGNORE_INVENTORY      = new ConfigBoolean("pasteIgnoreInventories", false).apply(GENERIC_KEY);
-        public static final ConfigBoolean       PASTE_TO_MCFUNCTION         = new ConfigBoolean("pasteToMcFunctionFiles", false).apply(GENERIC_KEY);
+        /** Audited fork (Task 14): the creative command tools (paste, fill, delete) are opt-in, one switch; off, their hotkeys and buttons only say they are disabled. */
+        public static final ConfigBoolean       COMMAND_TOOLS_ENABLED       = new ConfigBoolean("commandToolsEnabled", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       PASTE_USE_FILL_COMMAND      = new ConfigBoolean("pasteUseFillCommand", true).apply(GENERIC_KEY);
         public static final ConfigBoolean       PASTE_USING_COMMANDS_IN_SP  = new ConfigBoolean("pasteUsingCommandsInSp", false).apply(GENERIC_KEY);
         public static final ConfigBoolean       PICK_BLOCK_AVOID_DAMAGEABLE = new ConfigBoolean("pickBlockAvoidDamageable", true).apply(GENERIC_KEY);
@@ -117,9 +112,7 @@ public class Configs implements IConfigHandler
                 //BETTER_RENDER_ORDER,
                 CHANGE_SELECTED_CORNER,
                 CLONE_AT_ORIGINAL_POS,
-                COMMAND_DISABLE_FEEDBACK,
                 COMMAND_FILL_NO_CHUNK_CLAMP,
-                COMMAND_USE_WORLDEDIT,
 //                COMMAND_USE_STRICT,
                 CUSTOM_SCHEMATIC_BASE_DIRECTORY_ENABLED,
                 DEBUG_LOGGING,
@@ -157,7 +150,7 @@ public class Configs implements IConfigHandler
                 PASTE_IGNORE_ENTITIES,
                 PASTE_IGNORE_INVENTORY,
                 PASTE_NBT_BEHAVIOR,
-                PASTE_TO_MCFUNCTION,
+                COMMAND_TOOLS_ENABLED,
                 PASTE_USE_FILL_COMMAND,
                 PASTE_USING_COMMANDS_IN_SP,
                 PICK_BLOCK_AVOID_DAMAGEABLE,
@@ -182,10 +175,6 @@ public class Configs implements IConfigHandler
 
                 COMMAND_FILL_MAX_VOLUME,
                 COMMAND_LIMIT,
-                COMMAND_NAME_CLONE,
-                COMMAND_NAME_FILL,
-                COMMAND_NAME_SETBLOCK,
-                COMMAND_NAME_SUMMON,
                 COMMAND_TASK_INTERVAL,
                 CUSTOM_SCHEMATIC_BASE_DIRECTORY,
                 EASY_PLACE_SWAP_INTERVAL,

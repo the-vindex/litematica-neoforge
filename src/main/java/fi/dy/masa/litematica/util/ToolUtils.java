@@ -7,6 +7,9 @@ import net.minecraft.client.MinecraftClient;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
+import fi.dy.masa.litematica.scheduler.tasks.TaskDeleteArea;
+import fi.dy.masa.litematica.scheduler.tasks.TaskDeleteBlocksByPlacement;
+import fi.dy.masa.litematica.scheduler.tasks.TaskFillArea;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
@@ -20,7 +23,44 @@ public class ToolUtils
 {
     public static void fillSelectionVolumes(MinecraftClient mc, BlockState state, @Nullable BlockState stateToReplace)
     {
-        fi.dy.masa.litematica.util.AuditedBuild.refuse("fill");
+        // Audited fork (Task 14): restored behind CommandToolGate (opt-in commandToolsEnabled, creative, op).
+        if (CommandToolGate.allowedNow(mc, "fill") == false) return;
+        if (AuditedBuild.OPERATOR_IDS.contains(net.minecraft.registry.Registries.BLOCK.getId(state.getBlock()).toString()))
+        {
+            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "fill with an operator block is refused");
+            return;
+        }
+
+        final AreaSelection area = DataManager.getSelectionManager().getCurrentSelection();
+
+        if (area == null)
+        {
+            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_area_selected");
+            return;
+        }
+
+        if (area.getAllSubRegionBoxes().size() > 0)
+        {
+            Box currentBox = area.getSelectedSubRegionBox();
+            final ImmutableList<Box> boxes = currentBox != null ? ImmutableList.of(currentBox) : ImmutableList.copyOf(area.getAllSubRegionBoxes());
+
+            TaskFillArea task = new TaskFillArea(boxes, state, stateToReplace, false);
+            scheduler(mc).scheduleTask(task, Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue());
+            InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
+        }
+        else
+        {
+            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.empty_area_selection");
+        }
+    }
+
+    /**
+     * Single player: the integrated server's scheduler (the task writes that world on its own thread, as upstream);
+     * on a server: the client's (the task sends vanilla fill/setblock commands through CommandToolGate).
+     */
+    private static TaskScheduler scheduler(MinecraftClient mc)
+    {
+        return mc.isIntegratedServerRunning() ? TaskScheduler.getInstanceServer() : TaskScheduler.getInstanceClient();
     }
 
     public static void deleteSelectionVolumes(boolean removeEntities, MinecraftClient mc)
@@ -52,7 +92,33 @@ public class ToolUtils
     public static void deleteSelectionVolumes(@Nullable final AreaSelection area, boolean removeEntities,
             @Nullable ICompletionListener listener, MinecraftClient mc)
     {
-        fi.dy.masa.litematica.util.AuditedBuild.refuse("delete");
+        if (CommandToolGate.allowedNow(mc, "delete") == false) return;
+
+        if (area == null)
+        {
+            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_area_selected");
+            return;
+        }
+
+        if (area.getAllSubRegionBoxes().size() > 0)
+        {
+            Box currentBox = area.getSelectedSubRegionBox();
+            final ImmutableList<Box> boxes = currentBox != null ? ImmutableList.of(currentBox) : ImmutableList.copyOf(area.getAllSubRegionBoxes());
+
+            TaskDeleteArea task = new TaskDeleteArea(boxes, removeEntities);
+
+            if (listener != null)
+            {
+                task.setCompletionListener(listener);
+            }
+
+            scheduler(mc).scheduleTask(task, Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue());
+            InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
+        }
+        else
+        {
+            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.empty_area_selection");
+        }
     }
 
     public static void deleteBlocksByPlacement()
@@ -79,6 +145,16 @@ public class ToolUtils
                                                PlacementDeletionMode mode,
                                                @Nullable ICompletionListener listener)
     {
-        fi.dy.masa.litematica.util.AuditedBuild.refuse("delete by placement");
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (CommandToolGate.allowedNow(mc, "delete") == false) return;
+        TaskDeleteBlocksByPlacement task = new TaskDeleteBlocksByPlacement(ImmutableList.of(placement), mode, DataManager.getRenderLayerRange());
+
+        if (listener != null)
+        {
+            task.setCompletionListener(listener);
+        }
+
+        scheduler(mc).scheduleTask(task, Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue());
+        InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
     }
 }

@@ -16,6 +16,13 @@ public class Forgematica {
         if (FMLLoader.getDist().isClient()) {
             modContainer.registerExtensionPoint(IConfigScreenFactory.class, new ModMenuImpl().getModConfigScreenFactory());
             new Litematica().onInitialize();
+            // Audited fork (Task 14): single-player creative paste writes the integrated world on its own thread; its
+            // tasks run only on the player's integrated server, never on any other (a dedicated server never loads
+            // this client-only mod at all).
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, e -> {
+                if (e.getServer() == net.minecraft.client.MinecraftClient.getInstance().getServer())
+                    fi.dy.masa.litematica.scheduler.TaskScheduler.getInstanceServer().runTasks();
+            });
         }
     }
 }

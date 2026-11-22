@@ -4,8 +4,9 @@ import fi.dy.masa.malilib.gui.Message.MessageType;
 import fi.dy.masa.malilib.util.InfoUtils;
 
 /**
- * Audited fork (Overseer, local-minecraft-mods-forks/litematica): world-editing tools that send commands, paste into the
- * integrated server or use a server-side data channel are removed from this build. Their entry points call {@link #refuse} instead.
+ * Audited fork (Overseer, local-minecraft-mods-forks/litematica): no server-side data channel; move area and
+ * paste-to-mcfunction call {@link #refuse}. The creative Paste/Fill/Delete tools are restored behind {@link CommandToolGate}
+ * (opt-in, creative, op, vanilla commands only).
  * {@link #MARKER} lets other mods (the printer, Overseer) tell this build from a stock jar with the same version string.
  */
 public final class AuditedBuild

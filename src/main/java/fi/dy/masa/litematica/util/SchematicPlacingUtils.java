@@ -232,6 +232,15 @@ public class SchematicPlacingUtils
                         continue;
                     }
 
+                    // Audited fork (Task 14): into a real world (single-player paste) operator blocks are never placed and
+                    // operator data is never copied; the schematic's own render world is not affected.
+                    if (world instanceof fi.dy.masa.litematica.world.WorldSchematic == false)
+                    {
+                        String bid = net.minecraft.registry.Registries.BLOCK.getId(state.getBlock()).toString();
+                        if (AuditedBuild.OPERATOR_IDS.contains(bid)) continue;
+                        if (teNBT != null && AuditedBuild.containsOperatorData(teNBT, 0)) teNBT = null;
+                    }
+
                     BlockState stateOld = world.getBlockState(pos);
 
                     if ((replace == ReplaceBehavior.NONE && stateOld.isAir() == false) ||

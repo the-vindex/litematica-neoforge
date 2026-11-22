@@ -316,13 +316,6 @@ public class ToolHud extends InfoHud
 
                     str = Configs.Generic.PASTE_NBT_BEHAVIOR.getOptionListValue().getDisplayName();
 
-                    if (EntitiesDataStorage.getInstance().hasServuxServer()
-                        && Configs.Generic.PASTE_USING_SERVUX.getBooleanValue()
-                        && !Configs.Generic.PASTE_USING_COMMANDS_IN_SP.getBooleanValue())
-                    {
-                        str = orange + "Servux" + rst;
-                    }
-
                     lines.add(StringUtils.translate("litematica.hud.misc.schematic_paste.data_restore_mode", str));
 
                     String strVal = Configs.Generic.PASTE_IGNORE_INVENTORY.getBooleanValue() ? strYes : strNo;

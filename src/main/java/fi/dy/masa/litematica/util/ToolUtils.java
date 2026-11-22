@@ -7,9 +7,6 @@ import net.minecraft.client.MinecraftClient;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.scheduler.TaskScheduler;
-import fi.dy.masa.litematica.scheduler.tasks.TaskDeleteArea;
-import fi.dy.masa.litematica.scheduler.tasks.TaskDeleteBlocksByPlacement;
-import fi.dy.masa.litematica.scheduler.tasks.TaskFillArea;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacement;
 import fi.dy.masa.litematica.selection.AreaSelection;
 import fi.dy.masa.litematica.selection.Box;
@@ -23,36 +20,7 @@ public class ToolUtils
 {
     public static void fillSelectionVolumes(MinecraftClient mc, BlockState state, @Nullable BlockState stateToReplace)
     {
-        if (mc.player != null && EntityUtils.isCreativeMode(mc.player))
-        {
-            final AreaSelection area = DataManager.getSelectionManager().getCurrentSelection();
-
-            if (area == null)
-            {
-                InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_area_selected");
-                return;
-            }
-
-            if (area.getAllSubRegionBoxes().size() > 0)
-            {
-                Box currentBox = area.getSelectedSubRegionBox();
-                final ImmutableList<Box> boxes = currentBox != null ? ImmutableList.of(currentBox) : ImmutableList.copyOf(area.getAllSubRegionBoxes());
-
-                TaskFillArea task = new TaskFillArea(boxes, state, stateToReplace, false);
-                int interval = Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue();
-                TaskScheduler.getServerInstanceIfExistsOrClient().scheduleTask(task, interval);
-
-                InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
-            }
-            else
-            {
-                InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.empty_area_selection");
-            }
-        }
-        else
-        {
-            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.error.generic.creative_mode_only");
-        }
+        fi.dy.masa.litematica.util.AuditedBuild.refuse("fill");
     }
 
     public static void deleteSelectionVolumes(boolean removeEntities, MinecraftClient mc)
@@ -84,40 +52,7 @@ public class ToolUtils
     public static void deleteSelectionVolumes(@Nullable final AreaSelection area, boolean removeEntities,
             @Nullable ICompletionListener listener, MinecraftClient mc)
     {
-        if (mc.player != null && EntityUtils.isCreativeMode(mc.player))
-        {
-            if (area == null)
-            {
-                InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.no_area_selected");
-                return;
-            }
-
-            if (area.getAllSubRegionBoxes().size() > 0)
-            {
-                Box currentBox = area.getSelectedSubRegionBox();
-                final ImmutableList<Box> boxes = currentBox != null ? ImmutableList.of(currentBox) : ImmutableList.copyOf(area.getAllSubRegionBoxes());
-
-                TaskDeleteArea task = new TaskDeleteArea(boxes, removeEntities);
-
-                if (listener != null)
-                {
-                    task.setCompletionListener(listener);
-                }
-
-                int interval = Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue();
-                TaskScheduler.getServerInstanceIfExistsOrClient().scheduleTask(task, interval);
-
-                InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
-            }
-            else
-            {
-                InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.message.error.empty_area_selection");
-            }
-        }
-        else
-        {
-            InfoUtils.showGuiOrInGameMessage(MessageType.ERROR, "litematica.error.generic.creative_mode_only");
-        }
+        fi.dy.masa.litematica.util.AuditedBuild.refuse("delete");
     }
 
     public static void deleteBlocksByPlacement()
@@ -144,15 +79,6 @@ public class ToolUtils
                                                PlacementDeletionMode mode,
                                                @Nullable ICompletionListener listener)
     {
-        int interval = Configs.Generic.COMMAND_TASK_INTERVAL.getIntegerValue();
-        TaskDeleteBlocksByPlacement task = new TaskDeleteBlocksByPlacement(ImmutableList.of(placement), mode, DataManager.getRenderLayerRange());
-
-        if (listener != null)
-        {
-            task.setCompletionListener(listener);
-        }
-
-        TaskScheduler.getServerInstanceIfExistsOrClient().scheduleTask(task, interval);
-        InfoUtils.showGuiOrInGameMessage(MessageType.INFO, "litematica.message.scheduled_task_added");
+        fi.dy.masa.litematica.util.AuditedBuild.refuse("delete by placement");
     }
 }

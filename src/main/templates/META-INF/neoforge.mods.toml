@@ -5,6 +5,8 @@ issueTrackerURL="${mod_link}/issues"
 
 [[mods]]
 modId="${mod_id}"
+# Audited fork (Overseer): a pure client mod; a server never needs or loads it.
+displayTest="IGNORE_ALL_VERSION"
 version="${mod_version}"
 displayName="${mod_name}"
 displayURL="${mod_link}"
@@ -17,6 +19,7 @@ Litematica unofficial NeoForge port. A modern schematic mod for NeoForge.
 
 [[mods]]
 modId="litematica"
+displayTest="IGNORE_ALL_VERSION"
 version="${mod_version}"
 displayName="Litematica Stub"
 logoFile="assets/litematica/icon.png"
@@ -34,18 +37,18 @@ modId="neoforge"
 type="required"
 versionRange="${neoforge_version_range}"
 ordering="NONE"
-side="BOTH"
+side="CLIENT"
 
 [[dependencies."${mod_id}"]]
 modId="minecraft"
 type="required"
 versionRange="${minecraft_version_range}"
 ordering="NONE"
-side="BOTH"
+side="CLIENT"
 
 [[dependencies."${mod_id}"]]
 modId="mafglib"
 type="required"
 versionRange="${mafglib_version_range}"
 ordering="NONE"
-side="BOTH"
+side="CLIENT"

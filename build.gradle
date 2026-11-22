@@ -1,21 +1,17 @@
 plugins {
     id 'team.cagayakegirls.scripts'
     id 'dev.architectury.loom'
-    id 'com.hypherionmc.modutils.modpublisher' version '2.+'
 	id 'maven-publish'
 }
 
+// Audited fork (Overseer): MaFgLib comes only from the forks repo's local Maven (FORKS_MAVEN), built from our audited
+// malilib fork; no other extra repositories. Verified by gradle/verification-metadata.xml.
 repositories {
-	maven {url = "https://masa.dy.fi/maven/sakura-ryoko"
-		content {includeGroupAndSubgroups("fi.dy.masa")}
+	maven {
+		name = "forks"
+		url = System.getenv("FORKS_MAVEN") ?: "${System.getProperty('user.home')}/.cache/local-minecraft-mods-forks/maven"
+		content { includeGroup("team.cagayakegirls.mafglib") }
 	}
-	maven {url = 'https://maven.fallenbreath.me/releases'
-		content {includeGroupAndSubgroups("me.fallenbreath")}
-	}
-	maven {url = 'https://maven.terraformersmc.com/releases/'
-		content { includeGroupAndSubgroups("com.terraformersmc")}
-	}
-	maven { url = 'https://jitpack.io' }
 }
 
 dependencies {
@@ -86,8 +82,8 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {
-	preserveFileTimestamps = true
-	//reproducibleFileOrder = true
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
 }
 
 java {
@@ -107,53 +103,3 @@ jar {
 
 remapJar.atAccessWideners.add("litematica.accesswidener")
 
-tasks.publish.dependsOn build
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			// How to introduce archivesName here without it breaking?
-			artifactId = base.archivesName.get()
-
-			// add all the jars that should be included when publishing to maven
-			//artifact(jar)             { builtBy remapJar }
-			from components.java
-		}
-	}
-
-	repositories {
-		maven {
-			url = "$projectDir/../../CommonMaven"
-		}
-
-        maven {
-            name = "KTTMaven"
-            url = "https://maven.kessokuteatime.work/releases"
-
-            credentials {
-                username = System.getenv("KTT_MAVEN_USERNAME")
-                password = System.getenv("KTT_MAVEN_TOKEN")
-            }
-        }
-	}
-}
-
-publisher {
-    apiKeys {
-        modrinth System.getenv("MODRINTH_TOKEN")
-        curseforge System.getenv("CURSEFORGE_TOKEN")
-    }
-
-    setCurseID("${project.curseforge_id}")
-    setModrinthID("${project.modrinth_id}")
-    setVersionType("${project.version_type}")
-    setChangelog(file("CHANGELOG.md").getText("UTF-8"))
-    setVersion("${project.version}")
-    setDisplayName("${project.version}")
-    setGameVersions("1.21.1")
-    setLoaders(loom.platform.get().id())
-    setCurseEnvironment("client")
-    setArtifact(remapJar)
-    addAdditionalFile(sourcesJar)
-	curseDepends.required("mafglib")
-    modrinthDepends.required("mafglib")
-}

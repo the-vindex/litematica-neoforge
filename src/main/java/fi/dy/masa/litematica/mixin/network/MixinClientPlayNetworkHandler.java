@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.NbtQueryResponseS2CPacket;
@@ -53,23 +52,6 @@ public abstract class MixinClientPlayNetworkHandler
         if (DataManager.onChatMessage(packet.content()))
         {
             ci.cancel();
-        }
-    }
-
-    /**
-     * They keep moving where the effective onCustomPayload handling is... keeping them both
-     */
-    @Inject(method = "onCustomPayload", at = @At("HEAD"))
-    private void litematica_onCustomPayload(CustomPayload payload, CallbackInfo ci)
-    {
-        if (payload.getId().id().equals(DataManager.CARPET_HELLO))
-        {
-            Litematica.debugLog("MixinClientPlayNetworkHandler#litematica_onCustomPayload(): received carpet hello packet");
-            DataManager.setIsCarpetServer(true);
-        }
-        else if (payload.getId().id().getNamespace().equals("servux"))
-        {
-            DataManager.setHasServuxServer(true);
         }
     }
 

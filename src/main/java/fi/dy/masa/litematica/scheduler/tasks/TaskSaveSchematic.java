@@ -59,9 +59,8 @@ public class TaskSaveSchematic extends TaskProcessChunkBase
             return this.schematicWorld != null && this.schematicWorld.getChunkManager().isChunkLoaded(pos.x, pos.z);
         }
 
-        // Request entity data from Servux, if the ClientWorld matches, and treat it as not yet loaded
-        if ((EntitiesDataStorage.getInstance().hasServuxServer() ||
-            EntitiesDataStorage.getInstance().getIfReceivedBackupPackets()) &&
+        // Request entity data (vanilla NBT query backup), if the ClientWorld matches, and treat it as not yet loaded
+        if (EntitiesDataStorage.getInstance().getIfReceivedBackupPackets() &&
             Objects.equals(EntitiesDataStorage.getInstance().getWorld(), this.clientWorld))
         {
             if (EntitiesDataStorage.getInstance().hasCompletedChunk(pos))
@@ -84,11 +83,7 @@ public class TaskSaveSchematic extends TaskProcessChunkBase
 
                 if (this.areSurroundingChunksLoaded(pos, this.clientWorld, 0))
                 {
-                    if (EntitiesDataStorage.getInstance().hasServuxServer())
-                    {
-                        EntitiesDataStorage.getInstance().requestServuxBulkEntityData(pos, minY, maxY);
-                    }
-                    else if (EntitiesDataStorage.getInstance().getIfReceivedBackupPackets())
+                    if (EntitiesDataStorage.getInstance().getIfReceivedBackupPackets())
                     {
                         EntitiesDataStorage.getInstance().requestBackupBulkEntityData(pos, minY, maxY);
                     }
@@ -117,8 +112,7 @@ public class TaskSaveSchematic extends TaskProcessChunkBase
             this.schematic.takeEntitiesFromWorldWithinChunk(world, pos.x, pos.z, volumes, this.subRegions, this.existingEntities, this.origin);
         }
 
-        if ((EntitiesDataStorage.getInstance().hasServuxServer() ||
-            EntitiesDataStorage.getInstance().getIfReceivedBackupPackets()) &&
+        if (EntitiesDataStorage.getInstance().getIfReceivedBackupPackets() &&
             EntitiesDataStorage.getInstance().hasCompletedChunk(pos) &&
             Objects.equals(EntitiesDataStorage.getInstance().getWorld(), this.clientWorld))
         {

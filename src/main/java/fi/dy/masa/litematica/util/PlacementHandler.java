@@ -97,9 +97,7 @@ public class PlacementHandler
 
         if (protocol == EasyPlaceProtocol.AUTO)
         {
-            if (MinecraftClient.getInstance().isInSingleplayer() ||
-                EntitiesDataStorage.getInstance().hasServuxServer() ||
-                DataManager.hasServuxServer())
+            if (MinecraftClient.getInstance().isInSingleplayer())
             {
                 return EasyPlaceProtocol.V3;
             }

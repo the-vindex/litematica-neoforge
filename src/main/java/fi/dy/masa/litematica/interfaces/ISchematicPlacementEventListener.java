@@ -79,7 +79,7 @@ public interface ISchematicPlacementEventListener
     default void onSavePlacementToJson(SchematicPlacement placement, JsonObject json) {}
 
     /**
-     * Event callback when a Schematic Placement is being saved to NBT (To Servux for pasting, etc.).
+     * Event callback when a Schematic Placement is being saved to NBT.
      * @param placement ()
      * @param nbt ()
      */

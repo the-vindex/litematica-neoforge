@@ -43,8 +43,6 @@ import fi.dy.masa.malilib.interfaces.IDataSyncer;
 import fi.dy.masa.malilib.mixin.entity.IMixinAbstractHorseEntity;
 import fi.dy.masa.malilib.mixin.entity.IMixinPiglinEntity;
 import fi.dy.masa.malilib.mixin.network.IMixinDataQueryHandler;
-import fi.dy.masa.malilib.network.ClientPlayHandler;
-import fi.dy.masa.malilib.network.IPluginClientPlayHandler;
 import fi.dy.masa.malilib.util.InventoryUtils;
 import fi.dy.masa.malilib.util.data.Constants;
 import fi.dy.masa.malilib.util.nbt.NbtKeys;
@@ -52,8 +50,6 @@ import fi.dy.masa.malilib.util.nbt.NbtUtils;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.Reference;
 import fi.dy.masa.litematica.config.Configs;
-import fi.dy.masa.litematica.network.ServuxLitematicaHandler;
-import fi.dy.masa.litematica.network.ServuxLitematicaPacket;
 import fi.dy.masa.litematica.util.EntityUtils;
 import fi.dy.masa.litematica.util.PositionUtils;
 import fi.dy.masa.litematica.util.WorldUtils;
@@ -68,12 +64,10 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         return INSTANCE;
     }
 
-    private final static ServuxLitematicaHandler<ServuxLitematicaPacket.Payload> HANDLER = ServuxLitematicaHandler.getInstance();
+    // Audited fork (Overseer): the server-side data-sync channel is deleted; block entity / entity data comes from the
+    // local world (and vanilla's NBT query for operators) only.
     private final MinecraftClient mc;
     //private int uptimeTicks = 0;
-    private boolean servuxServer = false;
-    private boolean hasInValidServux = false;
-    private String servuxVersion;
     private final long chunkTimeoutMs = 5000;
     // Wait 5 seconds for loaded Client Chunks to receive Entity Data
     private boolean checkOpStatus = true;
@@ -136,15 +130,9 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         if (now - this.serverTickTime > 50)
         {
             // In this block, we do something every server tick
-            if (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() == false)
+            if (true)
             {
                 this.serverTickTime = now;
-
-                if (DataManager.getInstance().hasIntegratedServer() == false && this.hasServuxServer())
-                {
-                    this.servuxServer = false;
-                    HANDLER.unregisterPlayReceiver();
-                }
 
                 if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue() == false)
                 {
@@ -163,16 +151,6 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
                     return;
                 }
             }
-            else if (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() &&
-                    DataManager.getInstance().hasIntegratedServer() == false &&
-                    this.hasServuxServer() == false &&
-                    this.hasInValidServux == false &&
-                    this.getWorld() != null)
-            {
-                // Make sure we're Play Registered, and request Metadata
-                HANDLER.registerPlayReceiver(ServuxLitematicaPacket.Payload.ID, HANDLER::receivePlayPayload);
-                this.requestMetadata();
-            }
 
             // Expire cached NBT
             this.tickCache(now);
@@ -186,11 +164,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
                     BlockPos pos = iter.next();
                     iter.remove();
 
-                    if (this.hasServuxServer())
-                    {
-                        requestServuxBlockEntityData(pos);
-                    }
-                    else if (this.shouldUseQuery())
+                    if (this.shouldUseQuery())
                     {
                         // Only check once if we have OP
                         requestQueryBlockEntity(pos);
@@ -201,11 +175,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
                     var iter = this.pendingEntitiesQueue.iterator();
                     int entityId = iter.next();
                     iter.remove();
-                    if (this.hasServuxServer())
-                    {
-                        requestServuxEntityData(entityId);
-                    }
-                    else if (this.shouldUseQuery())
+                    if (this.shouldUseQuery())
                     {
                         // Only check once if we have OP
                         requestQueryEntityData(entityId);
@@ -214,11 +184,6 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             }
             this.serverTickTime = System.currentTimeMillis();
         }
-    }
-
-    public Identifier getNetworkChannel()
-    {
-        return ServuxLitematicaHandler.CHANNEL_ID;
     }
 
     private ClientPlayNetworkHandler getVanillaHandler()
@@ -231,21 +196,12 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         return null;
     }
 
-    public IPluginClientPlayHandler<ServuxLitematicaPacket.Payload> getNetworkHandler()
-    {
-        return HANDLER;
-    }
-
     @Override
     public void reset(boolean isLogout)
     {
         if (isLogout)
         {
             Litematica.debugLog("EntitiesDataStorage#reset() - log-out");
-            HANDLER.reset(this.getNetworkChannel());
-            HANDLER.resetFailures(this.getNetworkChannel());
-            this.servuxServer = false;
-            this.hasInValidServux = false;
             this.sentBackupPackets = false;
             this.receivedBackupPackets = false;
             this.checkOpStatus = false;
@@ -339,7 +295,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             entityTimeout = this.getCacheTimeoutLong();
 
             // Add extra time if using QueryNbt only
-            if (this.hasServuxServer() == false && this.getIfReceivedBackupPackets())
+            if (this.getIfReceivedBackupPackets())
             {
                 blockTimeout += 3000L;
                 entityTimeout += 3000L;
@@ -447,38 +403,9 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         return null;
     }
 
-    public void setIsServuxServer()
-    {
-        this.servuxServer = true;
-        this.hasInValidServux = false;
-    }
-
-    public boolean hasServuxServer()
-    {
-        return this.servuxServer;
-    }
-
     public boolean hasBackupStatus()
     {
         return Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue() && this.hasOpStatus;
-    }
-
-    public void setServuxVersion(String ver)
-    {
-        if (ver != null && ver.isEmpty() == false)
-        {
-            this.servuxVersion = ver;
-            Litematica.debugLog("LitematicDataChannel: joining Servux version {}", ver);
-        }
-        else
-        {
-            this.servuxVersion = "unknown";
-        }
-    }
-
-    public String getServuxVersion()
-    {
-        return this.servuxVersion;
     }
 
     public int getPendingBlockEntitiesCount()
@@ -514,64 +441,19 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
     @Override
     public void onGameInit()
     {
-        ClientPlayHandler.getInstance().registerClientPlayHandler(HANDLER);
-        HANDLER.registerPlayPayload(ServuxLitematicaPacket.Payload.ID, ServuxLitematicaPacket.Payload.CODEC, IPluginClientPlayHandler.BOTH_CLIENT);
+        // NO-OP (audited fork: no payload registration)
     }
 
     @Override
     public void onWorldPre()
     {
-        if (DataManager.getInstance().hasIntegratedServer() == false)
-        {
-            HANDLER.registerPlayReceiver(ServuxLitematicaPacket.Payload.ID, HANDLER::receivePlayPayload);
-        }
+        // NO-OP (audited fork: no payload receiver)
     }
 
     @Override
     public void onWorldJoin()
     {
         // NO-OP
-    }
-
-    public void requestMetadata()
-    {
-        if (DataManager.getInstance().hasIntegratedServer() == false &&
-            Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue())
-        {
-            NbtCompound nbt = new NbtCompound();
-            nbt.putString("version", Reference.MOD_STRING);
-
-            HANDLER.encodeClientData(ServuxLitematicaPacket.MetadataRequest(nbt));
-        }
-    }
-
-    public boolean receiveServuxMetadata(NbtCompound data)
-    {
-        if (DataManager.getInstance().hasIntegratedServer() == false)
-        {
-            Litematica.debugLog("LitematicDataChannel: received METADATA from Servux");
-
-            if (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue())
-            {
-                if (data.getInt("version") != ServuxLitematicaPacket.PROTOCOL_VERSION)
-                {
-                    Litematica.LOGGER.warn("LitematicDataChannel: Mis-matched protocol version!");
-                }
-
-                this.setServuxVersion(data.getString("servux"));
-                this.setIsServuxServer();
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public void onPacketFailure()
-    {
-        this.servuxServer = false;
-        this.hasInValidServux = true;
     }
 
     @Override
@@ -586,8 +468,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         {
             // Refresh at 25%
             if (!DataManager.getInstance().hasIntegratedServer() &&
-                (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() ||
-                 Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
+                (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
             {
                 if (System.currentTimeMillis() - this.blockEntityCache.get(pos).getLeft() > (this.getCacheTimeout() / 4))
                 {
@@ -606,8 +487,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         else if (world.getBlockState(pos).getBlock() instanceof BlockEntityProvider)
         {
             if (DataManager.getInstance().hasIntegratedServer() == false &&
-                (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() ||
-                 Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
+                (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
             {
 //                Litematica.debugLog("requestBlockEntity: be at pos [{}] queue at [{}] ms", pos.toShortString(), this.getCacheTimeout() / 4);
                 this.pendingBlockEntitiesQueue.add(pos);
@@ -657,8 +537,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         {
             // Refresh at 25%
             if (!DataManager.getInstance().hasIntegratedServer() &&
-                (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() ||
-                 Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
+                (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
             {
                 if (System.currentTimeMillis() - this.entityCache.get(entityId).getLeft() > (this.getCacheTimeout() / 4))
                 {
@@ -676,8 +555,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             return this.entityCache.get(entityId).getRight();
         }
         if (DataManager.getInstance().hasIntegratedServer() == false &&
-            (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() ||
-             Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
+            (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
         {
             this.pendingEntitiesQueue.add(entityId);
         }
@@ -791,8 +669,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             }
         }
 
-        if (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() ||
-            Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
+        if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
         {
             this.requestBlockEntity(world, pos);
         }
@@ -849,8 +726,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             }
         }
 
-        if (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue() ||
-            Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
+        if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
         {
             this.requestEntity(world, entityId);
         }
@@ -898,50 +774,10 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
         }
     }
 
-    private void requestServuxBlockEntityData(BlockPos pos)
-    {
-        if (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue())
-        {
-            HANDLER.encodeClientData(ServuxLitematicaPacket.BlockEntityRequest(pos));
-        }
-    }
-
-    private void requestServuxEntityData(int entityId)
-    {
-        if (Configs.Generic.ENTITY_DATA_SYNC.getBooleanValue())
-        {
-            HANDLER.encodeClientData(ServuxLitematicaPacket.EntityRequest(entityId));
-        }
-    }
-
     // The minY, maxY should be calculated based on the Selection Box...  But for now, we can just grab the entire chunk.
-    public void requestServuxBulkEntityData(ChunkPos chunkPos, int minY, int maxY)
-    {
-        if (this.hasServuxServer() == false)
-        {
-            return;
-        }
-
-        NbtCompound req = new NbtCompound();
-
-        this.completedChunks.remove(chunkPos);
-        this.pendingChunks.add(chunkPos);
-        this.pendingChunkTimeout.put(chunkPos, Util.getMeasuringTimeMs());
-
-        minY = MathHelper.clamp(minY, -60, 319);
-        maxY = MathHelper.clamp(maxY, -60, 319);
-
-        req.putString("Task", "BulkEntityRequest");
-        req.putInt("minY", minY);
-        req.putInt("maxY", maxY);
-
-        Litematica.debugLog("EntitiesDataStorage#requestServuxBulkEntityData(): for chunkPos [{}] to Servux (minY [{}], maxY [{}])", chunkPos.toString(), minY, maxY);
-        HANDLER.encodeClientData(ServuxLitematicaPacket.BulkNbtRequest(chunkPos, req));
-    }
-
     public void requestBackupBulkEntityData(ChunkPos chunkPos, int minY, int maxY)
     {
-        if (this.getIfReceivedBackupPackets() == false || this.hasServuxServer())
+        if (this.getIfReceivedBackupPackets() == false)
         {
             return;
         }
@@ -1010,7 +846,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     private boolean markBackupBlockEntityComplete(ChunkPos chunkPos, BlockPos pos)
     {
-        if (this.getIfReceivedBackupPackets() == false || this.hasServuxServer())
+        if (this.getIfReceivedBackupPackets() == false)
         {
             return true;
         }
@@ -1049,7 +885,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     private boolean markBackupEntityComplete(ChunkPos chunkPos, int entityId)
     {
-        if (this.getIfReceivedBackupPackets() == false || this.hasServuxServer())
+        if (this.getIfReceivedBackupPackets() == false)
         {
             return true;
         }
@@ -1115,7 +951,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             blockEntity.read(nbt, this.getClientWorld().getRegistryManager());
             ChunkPos chunkPos = new ChunkPos(pos);
 
-            if (this.hasPendingChunk(chunkPos) && this.hasServuxServer() == false)
+            if (this.hasPendingChunk(chunkPos))
             {
                 this.markBackupBlockEntityComplete(chunkPos, pos);
             }
@@ -1157,7 +993,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
                     ChunkPos chunkPos = new ChunkPos(pos);
 
-                    if (this.hasPendingChunk(chunkPos) && this.hasServuxServer() == false)
+                    if (this.hasPendingChunk(chunkPos))
                     {
                         this.markBackupBlockEntityComplete(chunkPos, pos);
                     }
@@ -1199,7 +1035,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
                 EntityUtils.loadNbtIntoEntity(entity, nbt);
             }
 
-            if (this.hasPendingChunk(entity.getChunkPos()) && this.hasServuxServer() == false)
+            if (this.hasPendingChunk(entity.getChunkPos()))
             {
                 this.markBackupEntityComplete(entity.getChunkPos(), entityId);
             }
@@ -1249,7 +1085,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             this.pendingChunkTimeout.remove(chunkPos);
             this.completedChunks.add(chunkPos);
 
-            Litematica.debugLog("EntitiesDataStorage#handleBulkEntityData(): [ChunkPos {}] received TE: [{}], and E: [{}] entiries from Servux", chunkPos.toString(), tileList.size(), entityList.size());
+            Litematica.debugLog("EntitiesDataStorage#handleBulkEntityData(): [ChunkPos {}] received TE: [{}], and E: [{}] entries", chunkPos.toString(), tileList.size(), entityList.size());
         }
     }
 
@@ -1275,7 +1111,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     public boolean hasPendingChunk(ChunkPos pos)
     {
-        if (this.hasServuxServer() || this.getIfReceivedBackupPackets())
+        if (this.getIfReceivedBackupPackets())
         {
             return this.pendingChunks.contains(pos);
         }
@@ -1285,8 +1121,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     private void checkForPendingChunkTimeout(ChunkPos pos)
     {
-        if ((this.hasServuxServer() && this.hasPendingChunk(pos)) ||
-            (this.getIfReceivedBackupPackets() && this.hasPendingChunk(pos)))
+        if (this.getIfReceivedBackupPackets() && this.hasPendingChunk(pos))
         {
             long now = Util.getMeasuringTimeMs();
 
@@ -1311,11 +1146,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     private long getChunkTimeoutMs()
     {
-        if (this.hasServuxServer())
-        {
-            return this.chunkTimeoutMs;
-        }
-        else if (this.getIfReceivedBackupPackets())
+        if (this.getIfReceivedBackupPackets())
         {
             return this.chunkTimeoutMs + 3000L;
         }
@@ -1325,7 +1156,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     public boolean hasCompletedChunk(ChunkPos pos)
     {
-        if (this.hasServuxServer() || this.getIfReceivedBackupPackets())
+        if (this.getIfReceivedBackupPackets())
         {
             this.checkForPendingChunkTimeout(pos);
             return this.completedChunks.contains(pos);
@@ -1336,7 +1167,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     public void markCompletedChunkDirty(ChunkPos pos)
     {
-        if (this.hasServuxServer() || this.getIfReceivedBackupPackets())
+        if (this.getIfReceivedBackupPackets())
         {
             this.completedChunks.remove(pos);
         }

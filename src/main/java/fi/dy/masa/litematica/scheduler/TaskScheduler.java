@@ -29,10 +29,8 @@ public class TaskScheduler
 
     public static TaskScheduler getServerInstanceIfExistsOrClient()
     {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        // Yes this is actually correct despite the naming - in single player we want to
-        // schedule stuff to the integrated server's thread in some cases
-        return mc.isIntegratedServerRunning() ? INSTANCE_SERVER : INSTANCE_CLIENT;
+        // Audited fork (Overseer): no code runs on the (integrated) server thread; every task runs on the client.
+        return INSTANCE_CLIENT;
     }
 
     public void scheduleTask(ITask task, int interval)

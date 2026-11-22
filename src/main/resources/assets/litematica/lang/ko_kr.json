@@ -1095,8 +1095,6 @@
     "litematica.message.schematic_rendering_refreshed": "스키매틱 렌더링이 새로고침 되었습니다.",
     "litematica.message.schematic_save_task_created": "스키매틱 저장 작업이 생성되었습니다.",
     "litematica.message.schematic_saved_as": "스키매틱이 저장되었습니다. '%s'",
-    "litematica.message.schematic_transmit_complete": "스키매틱 전송 완료 (총 바이트: %d)",
-    "litematica.message.schematic_transmit_start": "스키매틱 전송 시작",
     "litematica.message.set_area_origin": "영역 기준점이 설정되었습니다. %s",
     "litematica.message.set_selection_box_point": "포인트 %d를 %s로 설정/이동",
     "litematica.message.toggled": "토글 %s %s",

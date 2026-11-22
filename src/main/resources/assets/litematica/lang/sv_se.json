@@ -1095,8 +1095,6 @@
     "litematica.message.schematic_rendering_refreshed": "Schemarenderingen uppdaterades",
     "litematica.message.schematic_save_task_created": "Uppgift för att spara schemat skapad",
     "litematica.message.schematic_saved_as": "Schemat sparades som '%s'",
-    "litematica.message.schematic_transmit_complete": "Schemaöverföringen slutfördes (totalt antal byte: %d)",
-    "litematica.message.schematic_transmit_start": "Schemaöverföring startad",
     "litematica.message.set_area_origin": "Ange områdets ursprungspunkt till %s",
     "litematica.message.set_selection_box_point": "Punkt %d sattes/flyttades till %s",
     "litematica.message.toggled": "Växlade %s %s",

@@ -1095,8 +1095,6 @@
     "litematica.message.schematic_rendering_refreshed": "Şematik görünümü yenilendi",
     "litematica.message.schematic_save_task_created": "Şematik kaydetme görevi oluşturuldu",
     "litematica.message.schematic_saved_as": "Şematik '%s' olarak kaydedildi",
-    "litematica.message.schematic_transmit_complete": "Şematik gönderimi tamamlandı (toplam bayt: %d)",
-    "litematica.message.schematic_transmit_start": "Şematik gönderimi başlıyor",
     "litematica.message.set_area_origin": "Alan başlangıç noktası %s olarak ayarlandı",
     "litematica.message.set_selection_box_point": "%d noktası %s konumuna ayarlandı/taşındı",
     "litematica.message.toggled": "%s özelliği %s durumuna getirildi",

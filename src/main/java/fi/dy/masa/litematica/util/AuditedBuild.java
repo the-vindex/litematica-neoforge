@@ -10,10 +10,32 @@ import fi.dy.masa.malilib.util.InfoUtils;
  */
 public final class AuditedBuild
 {
-    /** Capability revision of the audited fork; bumped when its contract for other mods changes. */
-    public static final String MARKER = "overseer-audited-1";
+    /**
+     * Capability revision of the audited fork; bumped when its contract for other mods changes. Deliberately not a
+     * compile-time constant (String.valueOf): other mods read it at runtime through {@link #marker()}, never inlined.
+     */
+    public static final String MARKER = String.valueOf("overseer-audited-2");
+
+    /** The marker of the installed build, read at runtime (reflection target for the printer and Overseer). */
+    public static String marker()
+    {
+        return MARKER;
+    }
 
     private AuditedBuild() {}
+
+    /**
+     * Whether a block entity's data may be copied onto an item (creative pick-block with Ctrl). Never for operator-only
+     * blocks: command blocks (their command NBT would reach the server in a creative slot packet), structure blocks and
+     * jigsaws.
+     */
+    public static boolean mayCopyBlockEntityData(net.minecraft.block.entity.BlockEntity te)
+    {
+        return te != null
+            && !(te instanceof net.minecraft.block.entity.CommandBlockBlockEntity)
+            && !(te instanceof net.minecraft.block.entity.StructureBlockBlockEntity)
+            && !(te instanceof net.minecraft.block.entity.JigsawBlockEntity);
+    }
 
     public static void refuse(String what)
     {

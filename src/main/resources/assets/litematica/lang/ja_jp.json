@@ -1097,8 +1097,6 @@
     "litematica.message.schematic_rendering_refreshed": "図面の描画をリフレッシュしました",
     "litematica.message.schematic_save_task_created": "図面保存タスクが作成されました",
     "litematica.message.schematic_saved_as": "図面を '%s' として保存しました",
-    "litematica.message.schematic_transmit_complete": "Schematic transmit completed (total bytes: %d)",
-    "litematica.message.schematic_transmit_start": "Schematic transmit start",
     "litematica.message.set_area_origin": "領域の原点を %s に設定しました",
     "litematica.message.set_selection_box_point": "点%d を %s に設定しました",
     "litematica.message.toggled": "%s: %s",

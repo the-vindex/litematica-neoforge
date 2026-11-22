@@ -1094,8 +1094,6 @@
     "litematica.message.schematic_rendering_refreshed": "§a原理图渲染已刷新§r",
     "litematica.message.schematic_save_task_created": "§a已创建原理图保存任务§r",
     "litematica.message.schematic_saved_as": "§a原理图已保存为'%s'§r",
-    "litematica.message.schematic_transmit_complete": "原理图传输完成（总字节数：%d）",
-    "litematica.message.schematic_transmit_start": "开始传输原理图",
     "litematica.message.set_area_origin": "§a已设置区域原点至 %s§r",
     "litematica.message.set_selection_box_point": "§a已设置/移动点 %d 至 %s§r",
     "litematica.message.toggled": "§a已切换 %s %s§r",

@@ -1532,13 +1532,13 @@
       </component>
       <component group="team.cagayakegirls.mafglib" name="mafglib" version="0.4.4+mc1.21.1">
          <artifact name="mafglib-0.4.4+mc1.21.1-sources.jar">
-            <sha256 value="f57c61fb1c1086adb1ca2774d88b2c98086a3f059711612344758df6d26028b2" origin="verify-deps.py: forks" />
+            <sha256 value="f17f1eb6f491536f6eb05d5223af687dcf47fd1689b80c1d2c6bc4d957c1e207" origin="verify-deps.py: forks" />
          </artifact>
          <artifact name="mafglib-0.4.4+mc1.21.1.jar">
-            <sha256 value="2f2eedda176048e1dc633afae1551129cd427c47cd530f162f3644693fdc3593" origin="verify-deps.py: forks" />
+            <sha256 value="7988c08f45c62ec58310af6a3d12591cd541f0e55d0c9d7c9f23c7abe50c011b" origin="verify-deps.py: forks" />
          </artifact>
          <artifact name="mafglib-0.4.4+mc1.21.1.module">
-            <sha256 value="5a529a7da2e47659aca83ef4bc1454accbfd0eb94171d4e5f4c9a626b9e4ff63" origin="verify-deps.py: forks" />
+            <sha256 value="71b51120a1748c2b52d2cfa6ba1e12c9e67b70b1715e786e9c0370d98b22f37a" origin="verify-deps.py: forks" />
          </artifact>
       </component>
       <component group="net.neoforged" name="AutoRenamingTool" version="2.0.3">
@@ -1729,6 +1729,19 @@
          </artifact>
          <artifact name="yarn-mappings-patch-neoforge-1.21+build.4.pom">
             <sha256 value="4752512d678545fc21dcb50119a2817c8d383389d4cf840f88075099f5c399f8" origin="verify-deps.py: Architectury" />
+         </artifact>
+      </component>
+      <component group="org.gradle.toolchains" name="foojay-resolver" version="1.0.0">
+         <artifact name="foojay-resolver-1.0.0.jar">
+            <sha256 value="78b86a47dfdf7697c9bd15da78983fd80da7247d6e02fc106bdf07e0388b60a8" origin="verify-deps.py: Gradle Central Plugin Repository" />
+         </artifact>
+         <artifact name="foojay-resolver-1.0.0.module">
+            <sha256 value="6190cf0e42e664c11e1ac0a785699ab02b549cea34392c679f36d8a2c550fcb9" origin="verify-deps.py: Gradle Central Plugin Repository" />
+         </artifact>
+      </component>
+      <component group="org.gradle.toolchains.foojay-resolver-convention" name="org.gradle.toolchains.foojay-resolver-convention.gradle.plugin" version="1.0.0">
+         <artifact name="org.gradle.toolchains.foojay-resolver-convention.gradle.plugin-1.0.0.pom">
+            <sha256 value="f133249a18754ae6a1d2701d00d849b1afba7b0683ddb5fc1b18a70071cec2fa" origin="verify-deps.py: Gradle Central Plugin Repository" />
          </artifact>
       </component>
    </components>

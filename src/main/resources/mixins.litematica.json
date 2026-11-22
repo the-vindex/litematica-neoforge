@@ -3,7 +3,8 @@
     "package": "fi.dy.masa.litematica.mixin",
     "compatibilityLevel": "JAVA_21",
     "minVersion": "0.8",
-    "mixins": [
+    "mixins": [],
+    "client": [
         "block.IMixinAbstractBlock",
         "block.IMixinFenceGateBlock",
         "block.IMixinRedstoneWireBlock",
@@ -12,24 +13,18 @@
         "block.IMixinWallMountedBlock",
         "block.MixinBlock",
         "block.MixinBlockStateFlattening",
+        "block.MixinBlockStatesLoader",
         "block.MixinChestBlock",
         "block.MixinRailBlocks",
         "block.MixinStairsBlock",
         "client.IMixinProfilerSystem",
+        "client.MixinMinecraftClient",
         "entity.IMixinEntity",
         "entity.IMixinSignBlockEntity",
         "entity.MixinEntity",
-        "network.IMixinChunkDeltaUpdateS2CPacket",
-        "world.IMixinWorld",
-        "world.IMixinWorldTickScheduler",
-        "world.MixinWorld",
-        "world.MixinWorldChunk"
-    ],
-    "client": [
-        "block.MixinBlockStatesLoader",
-        "client.MixinMinecraftClient",
         "hud.MixinDebugHud",
         "input.IMixinKeyBinding",
+        "network.IMixinChunkDeltaUpdateS2CPacket",
         "network.MixinClientPlayNetworkHandler",
         "render.IMixinBlockRenderManager",
         "render.MixinBufferBuilder",
@@ -37,7 +32,11 @@
         "render.MixinWorldRenderer",
         "screen.IMixinHandledScreen",
         "screen.MixinHandledScreen",
-        "world.MixinClientWorld"
+        "world.IMixinWorld",
+        "world.IMixinWorldTickScheduler",
+        "world.MixinClientWorld",
+        "world.MixinWorld",
+        "world.MixinWorldChunk"
     ],
     "server": [],
     "injectors": {

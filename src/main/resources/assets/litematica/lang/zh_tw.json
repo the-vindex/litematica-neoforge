@@ -1095,8 +1095,6 @@
     "litematica.message.schematic_rendering_refreshed": "原理圖繪製已重新整理",
     "litematica.message.schematic_save_task_created": "已建立原理圖儲存任務",
     "litematica.message.schematic_saved_as": "原理圖儲存為「%s」",
-    "litematica.message.schematic_transmit_complete": "原理圖傳送完成 (總位元組：%d)",
-    "litematica.message.schematic_transmit_start": "原理圖傳送開始",
     "litematica.message.set_area_origin": "將區域原點設定為 %s",
     "litematica.message.set_selection_box_point": "設定/移動點從 %d 到 %s",
     "litematica.message.toggled": "已切換 %s %s",

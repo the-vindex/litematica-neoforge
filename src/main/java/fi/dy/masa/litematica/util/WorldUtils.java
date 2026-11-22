@@ -663,42 +663,12 @@ public class WorldUtils
 
     public static void easyPlaceOnUseTick(MinecraftClient mc)
     {
-        if (mc.player != null && DataManager.getToolMode() != ToolMode.REBUILD &&
-            Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
-            Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() &&
-            Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld())
-        {
-            WorldUtils.doEasyPlaceAction(mc);
-        }
+        // audited fork: Easy Place is removed
     }
 
     public static boolean handleEasyPlace(MinecraftClient mc)
     {
-        if (Configs.Generic.EASY_PLACE_MODE.getBooleanValue() &&
-            DataManager.getToolMode() != ToolMode.REBUILD)
-        {
-            ActionResult result = doEasyPlaceAction(mc);
-
-            if (result == ActionResult.FAIL)
-            {
-                MessageOutputType type = (MessageOutputType) Configs.Generic.PLACEMENT_RESTRICTION_WARN.getOptionListValue();
-
-                if (type == MessageOutputType.MESSAGE)
-                {
-                    InfoUtils.showGuiOrInGameMessage(MessageType.WARNING, "litematica.message.easy_place_fail");
-                }
-                else if (type == MessageOutputType.ACTIONBAR)
-                {
-                    InfoUtils.printActionbarMessage("litematica.message.easy_place_fail");
-                }
-
-                return true;
-            }
-
-            return result != ActionResult.PASS;
-        }
-
-        return false;
+        return false;   // audited fork: Easy Place is removed (the printer is the only automatic placer)
     }
 
     private static ActionResult doEasyPlaceAction(MinecraftClient mc)

@@ -1097,8 +1097,6 @@
     "litematica.message.schematic_rendering_refreshed": "Rendu schématique actualisé",
     "litematica.message.schematic_save_task_created": "Tâche de sauvegarde schématique créée",
     "litematica.message.schematic_saved_as": "Schéma enregistré en tant que «%s»",
-    "litematica.message.schematic_transmit_complete": "Schematic transmit completed (total bytes: %d)",
-    "litematica.message.schematic_transmit_start": "Schematic transmit start",
     "litematica.message.set_area_origin": "Le point d'origine de la zone a été défini à %s",
     "litematica.message.set_selection_box_point": "Configure/déplacé le point %d vers %s",
     "litematica.message.toggled": "Basculé %s %s",

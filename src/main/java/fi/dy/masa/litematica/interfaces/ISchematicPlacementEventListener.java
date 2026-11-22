@@ -61,7 +61,7 @@ public interface ISchematicPlacementEventListener
     default void onPlacementCreateFromJson(SchematicPlacement placement, LitematicaSchematic schematic, BlockPos origin, String name, BlockRotation rotation, BlockMirror mirror, boolean enabled, boolean enableRender, JsonObject obj) {}
 
     /**
-     * Event callback when a Schematic Placement is created from loading it via an NbtCompound (Litematic Transmit).
+     * Event callback when a Schematic Placement is created from loading it via an NbtCompound.
      * @param placement ()
      * @param schematic ()
      * @param origin ()

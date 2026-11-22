@@ -249,7 +249,7 @@ public class InventoryUtils
                 // The creative mode pick block with NBT only works correctly
                 // if the server world doesn't have a TileEntity in that position.
                 // Otherwise it would try to write whatever that TE is into the picked ItemStack.
-                if (GuiBase.isCtrlDown() && te != null && mc.world.isAir(pos))
+                if (GuiBase.isCtrlDown() && te != null && mc.world.isAir(pos) && AuditedBuild.mayCopyBlockEntityData(te))
                 {
                     te.setStackNbt(stack, schematicWorld.getRegistryManager());
                     //stack.set(DataComponentTypes.LORE, new LoreComponent(ImmutableList.of(Text.of("(+NBT)"))));

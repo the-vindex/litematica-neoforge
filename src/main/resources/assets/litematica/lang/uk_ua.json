@@ -1097,8 +1097,6 @@
     "litematica.message.schematic_rendering_refreshed": "Зображення схематики оновлено",
     "litematica.message.schematic_save_task_created": "Створено завдання збереження схематики",
     "litematica.message.schematic_saved_as": "Схематику збережено як «%s»",
-    "litematica.message.schematic_transmit_complete": "Передача схематики завершена (усього байтів: %d)",
-    "litematica.message.schematic_transmit_start": "Передача схематики зірки",
     "litematica.message.set_area_origin": "Установлено початкову точку области на %s",
     "litematica.message.set_selection_box_point": "Установлено/переміщено точку %d до %s",
     "litematica.message.toggled": "Перемикач %s %s",

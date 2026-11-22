@@ -1097,8 +1097,6 @@
     "litematica.message.schematic_rendering_refreshed": "Отображение схемы перезагружено",
     "litematica.message.schematic_save_task_created": "Задача сохранения схемы создана",
     "litematica.message.schematic_saved_as": "Схема '%s' сохранена",
-    "litematica.message.schematic_transmit_complete": "Schematic transmit completed (total bytes: %d)",
-    "litematica.message.schematic_transmit_start": "Schematic transmit start",
     "litematica.message.set_area_origin": "Привязка региона установлена на %s",
     "litematica.message.set_selection_box_point": "Угол %d установлен на %s",
     "litematica.message.toggled": "Переключён %s %s",

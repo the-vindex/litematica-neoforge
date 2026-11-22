@@ -51,9 +51,18 @@ public class TaskSaveSchematic extends TaskProcessChunkBase
         this.addPerChunkBoxes(area.getAllSubRegionBoxes());
     }
 
+    private boolean querying;
+
     @Override
     protected boolean canProcessChunk(ChunkPos pos)
     {
+        // Audited fork: this explicit save is the only scope in which vanilla block-entity queries may be sent.
+        if (this.querying == false && this.fromSchematicWorld == false)
+        {
+            this.querying = true;
+            EntitiesDataStorage.getInstance().beginSaveScope();
+        }
+
         if (this.fromSchematicWorld)
         {
             return this.schematicWorld != null && this.schematicWorld.getChunkManager().isChunkLoaded(pos.x, pos.z);
@@ -126,6 +135,12 @@ public class TaskSaveSchematic extends TaskProcessChunkBase
     @Override
     protected void onStop()
     {
+        if (this.querying)
+        {
+            this.querying = false;
+            EntitiesDataStorage.getInstance().endSaveScope();
+        }
+
         if (this.finished)
         {
             long time = System.currentTimeMillis();

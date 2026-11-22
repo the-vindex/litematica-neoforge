@@ -1099,8 +1099,6 @@
     "litematica.message.schematic_rendering_refreshed": "Schematic rendering refreshed",
     "litematica.message.schematic_save_task_created": "Schematic saving task created",
     "litematica.message.schematic_saved_as": "Schematic saved as '%s'",
-    "litematica.message.schematic_transmit_complete": "Schematic transmit completed (total bytes: %d)",
-    "litematica.message.schematic_transmit_start": "Schematic transmit start",
     "litematica.message.set_area_origin": "Set the area origin point to %s",
     "litematica.message.set_selection_box_point": "Set/moved point %d to %s",
     "litematica.message.toggled": "Toggled %s %s",

@@ -1097,8 +1097,6 @@
     "litematica.message.schematic_rendering_refreshed": "Rendering dello schema aggiornato",
     "litematica.message.schematic_save_task_created": "Compito di salvataggio dello schema creato",
     "litematica.message.schematic_saved_as": "Schema salvato come '%s'",
-    "litematica.message.schematic_transmit_complete": "Schematic transmit completed (total bytes: %d)",
-    "litematica.message.schematic_transmit_start": "Schematic transmit start",
     "litematica.message.set_area_origin": "Impostato il punto di origine dell'area su %s",
     "litematica.message.set_selection_box_point": "Punto %d impostato/spostato su %s",
     "litematica.message.toggled": "Attivato/disattivato %s %s",

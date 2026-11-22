@@ -65,7 +65,35 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
     }
 
     // Audited fork (Overseer): the server-side data-sync channel is deleted; block entity / entity data comes from the
-    // local world (and vanilla's NBT query for operators) only.
+    // local world, and vanilla's block-entity NBT query only during an explicit schematic save (beginSaveScope /
+    // endSaveScope, a bounded budget per save). Rendering and other readers never queue a query; entity queries are gone.
+    public static final int SAVE_QUERY_BUDGET = 1024, QUERIES_PER_TICK = 5;
+    private int saveScopes;
+    private int saveBudget;
+
+    /** A schematic save starts: block-entity queries may be sent for it, up to SAVE_QUERY_BUDGET. */
+    public synchronized void beginSaveScope()
+    {
+        if (this.saveScopes++ == 0) this.saveBudget = SAVE_QUERY_BUDGET;
+    }
+
+    /** A schematic save ended (finished or cancelled): its queued queries are dropped when no save is left. */
+    public synchronized void endSaveScope()
+    {
+        this.saveScopes = Math.max(0, this.saveScopes - 1);
+        if (this.saveScopes == 0) { this.pendingBlockEntitiesQueue.clear(); this.pendingEntitiesQueue.clear(); }
+    }
+
+    public synchronized boolean inSaveScope() { return this.saveScopes > 0; }
+
+    public int pendingQueryCount() { return this.pendingBlockEntitiesQueue.size() + this.pendingEntitiesQueue.size(); }
+
+    private synchronized boolean mayQueue()
+    {
+        if (this.saveScopes <= 0 || this.saveBudget <= 0) return false;
+        this.saveBudget--;
+        return true;
+    }
     private final MinecraftClient mc;
     //private int uptimeTicks = 0;
     private final long chunkTimeoutMs = 5000;
@@ -155,8 +183,16 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             // Expire cached NBT
             this.tickCache(now);
 
-            // 5 queries / server tick
-            for (int i = 0; i < Configs.Generic.SERVER_NBT_REQUEST_RATE.getIntegerValue(); i++)
+            // Audited fork: queries only for an active schematic save; no entity queries; at most 5 in total per tick.
+            this.pendingEntitiesQueue.clear();
+            if (this.inSaveScope() == false)
+            {
+                this.pendingBlockEntitiesQueue.clear();
+                this.serverTickTime = System.currentTimeMillis();
+                return;
+            }
+            int rate = Math.min(QUERIES_PER_TICK, Configs.Generic.SERVER_NBT_REQUEST_RATE.getIntegerValue());
+            for (int i = 0; i < rate; i++)
             {
                 if (!this.pendingBlockEntitiesQueue.isEmpty())
                 {
@@ -472,8 +508,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             {
                 if (System.currentTimeMillis() - this.blockEntityCache.get(pos).getLeft() > (this.getCacheTimeout() / 4))
                 {
-//                    Litematica.debugLog("requestBlockEntity: be at pos [{}] requeue at [{}] ms", pos.toShortString(), this.getCacheTimeout() / 4);
-                    this.pendingBlockEntitiesQueue.add(pos);
+                    if (this.mayQueue()) this.pendingBlockEntitiesQueue.add(pos);   // audited fork: save scope only
                 }
             }
 
@@ -489,8 +524,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             if (DataManager.getInstance().hasIntegratedServer() == false &&
                 (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
             {
-//                Litematica.debugLog("requestBlockEntity: be at pos [{}] queue at [{}] ms", pos.toShortString(), this.getCacheTimeout() / 4);
-                this.pendingBlockEntitiesQueue.add(pos);
+                if (this.mayQueue()) this.pendingBlockEntitiesQueue.add(pos);   // audited fork: save scope only
             }
 
             return this.refreshBlockEntityFromWorld(this.getClientWorld(), pos);
@@ -541,8 +575,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             {
                 if (System.currentTimeMillis() - this.entityCache.get(entityId).getLeft() > (this.getCacheTimeout() / 4))
                 {
-                    //Litematica.debugLog("requestEntity: entity Id [{}] requeue at [{}] ms", entityId, this.getCacheTimeout() / 4);
-                    this.pendingEntitiesQueue.add(entityId);
+                    // audited fork: no entity queries
                 }
             }
 
@@ -554,12 +587,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
             return this.entityCache.get(entityId).getRight();
         }
-        if (DataManager.getInstance().hasIntegratedServer() == false &&
-            (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
-        {
-            this.pendingEntitiesQueue.add(entityId);
-        }
-
+        // audited fork: no entity queries (local data only)
         return this.refreshEntityFromWorld(this.getClientWorld(), entityId);
     }
 
@@ -756,10 +784,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     private void requestQueryEntityData(int entityId)
     {
-        if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue() == false)
-        {
-            return;
-        }
+        if (true) return;   // audited fork: entity NBT queries are not sent
 
         ClientPlayNetworkHandler handler = this.getVanillaHandler();
 
@@ -822,11 +847,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
         Set<Integer> entSet = new LinkedHashSet<>();
 
-        for (Entity entity : entList)
-        {
-            this.requestEntity(world, entity.getId());
-            entSet.add(entity.getId());
-        }
+        // audited fork: entities are saved from local data only (no entity queries)
 
         if (entSet.size() > 0)
         {

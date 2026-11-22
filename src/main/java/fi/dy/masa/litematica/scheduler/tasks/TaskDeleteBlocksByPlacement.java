@@ -119,14 +119,8 @@ public class TaskDeleteBlocksByPlacement extends TaskProcessChunkMultiPhase
     @Override
     protected void onNextChunkFetched(ChunkPos pos)
     {
-        if (this.isClientWorld)
-        {
-            this.queueCommandsForBoxesInChunk(pos);
-        }
-        else
-        {
-            this.directRemoveBoxesInChunk(pos);
-        }
+        // Audited fork: always the vanilla command path (no code of ours writes a server world, integrated included)
+        this.queueCommandsForBoxesInChunk(pos);
     }
 
     protected void queueCommandsForBoxesInChunk(ChunkPos pos)
@@ -139,17 +133,6 @@ public class TaskDeleteBlocksByPlacement extends TaskProcessChunkMultiPhase
 
         // Use this phase to send the queued commands
         this.phase = TaskPhase.PROCESS_BOX_BLOCKS;
-    }
-
-    protected void directRemoveBoxesInChunk(ChunkPos pos)
-    {
-        for (IntBoundingBox box : this.getBoxesInChunk(pos))
-        {
-            TaskFillArea.directRemoveEntities(box, this.world);
-            this.removeBlocksInBox(box, this.mode, this::removeBlockDirect);
-        }
-
-        this.finishProcessingChunk(pos);
     }
 
     protected void removeBlocksInBox(IntBoundingBox box, PlacementDeletionMode mode, Consumer<BlockPos> removeFunc)
@@ -169,7 +152,7 @@ public class TaskDeleteBlocksByPlacement extends TaskProcessChunkMultiPhase
                         check.shouldDelete(posMutable, this.schematicWorld, this.world))
                     {
                         removeFunc.accept(posMutable);
-                        this.removeBlockDirect(posMutable);
+                        this.removeBlockLocally(posMutable);
                         ++this.blockCount;
                     }
                 }
@@ -177,17 +160,10 @@ public class TaskDeleteBlocksByPlacement extends TaskProcessChunkMultiPhase
         }
     }
 
-    protected void removeBlockDirect(BlockPos pos)
+    /** The client's own copy only (as upstream did on a server), so a block is not queued twice; the server decides. */
+    protected void removeBlockLocally(BlockPos pos)
     {
-        BlockEntity te = this.world.getBlockEntity(pos);
-
-        if (te instanceof Inventory)
-        {
-            ((Inventory) te).clear();
-            this.world.setBlockState(pos, Blocks.BARRIER.getDefaultState(), 0x32);
-        }
-
-        this.world.setBlockState(pos, Blocks.AIR.getDefaultState(), 0x32);
+        this.clientWorld.setBlockState(pos, Blocks.AIR.getDefaultState(), 0x32);
     }
 
     protected void removeEntitiesByCommand(IntBoundingBox box)

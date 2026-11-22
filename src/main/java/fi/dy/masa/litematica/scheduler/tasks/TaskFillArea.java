@@ -103,14 +103,8 @@ public class TaskFillArea extends TaskProcessChunkMultiPhase
     @Override
     protected void onNextChunkFetched(ChunkPos pos)
     {
-        if (this.isClientWorld)
-        {
-            this.queueCommandsForBoxesInChunk(pos);
-        }
-        else
-        {
-            this.directFillBoxesInChunk(pos);
-        }
+        // Audited fork: always the vanilla command path (no code of ours writes a server world, integrated included)
+        this.queueCommandsForBoxesInChunk(pos);
     }
 
     protected void queueCommandsForBoxesInChunk(ChunkPos pos)
@@ -122,70 +116,6 @@ public class TaskFillArea extends TaskProcessChunkMultiPhase
 
         // Use this phase to send the queued commands
         this.phase = TaskPhase.PROCESS_BOX_BLOCKS;
-    }
-
-    protected void directFillBoxesInChunk(ChunkPos pos)
-    {
-        for (IntBoundingBox box : this.getBoxesInChunk(pos))
-        {
-            this.directFillBox(box, this.removeEntities);
-        }
-
-        this.finishProcessingChunk(pos);
-    }
-
-    protected void directFillBox(IntBoundingBox box, boolean removeEntities)
-    {
-        if (removeEntities)
-        {
-            directRemoveEntities(box, this.world);
-        }
-
-        WorldUtils.setShouldPreventBlockUpdates(this.world, true);
-
-        BlockState barrier = Blocks.BARRIER.getDefaultState();
-        BlockPos.Mutable posMutable = new BlockPos.Mutable();
-
-        for (int z = box.minZ; z <= box.maxZ; ++z)
-        {
-            for (int x = box.minX; x <= box.maxX; ++x)
-            {
-                for (int y = box.maxY; y >= box.minY; --y)
-                {
-                    posMutable.set(x, y, z);
-                    BlockState oldState = this.world.getBlockState(posMutable);
-
-                    if ((this.replaceState == null && oldState != this.fillState) || oldState == this.replaceState)
-                    {
-                        BlockEntity te = this.world.getBlockEntity(posMutable);
-
-                        if (te instanceof Inventory)
-                        {
-                            ((Inventory) te).clear();
-                            this.world.setBlockState(posMutable, barrier, 0x32);
-                        }
-
-                        this.world.setBlockState(posMutable, this.fillState, 0x32);
-                    }
-                }
-            }
-        }
-
-        WorldUtils.setShouldPreventBlockUpdates(this.world, false);
-    }
-
-    public static void directRemoveEntities(IntBoundingBox box, World world)
-    {
-        net.minecraft.util.math.Box aabb = new net.minecraft.util.math.Box(box.minX, box.minY, box.minZ, box.maxX + 1, box.maxY + 1, box.maxZ + 1);
-        List<Entity> entities = world.getOtherEntities(null, aabb, EntityUtils.NOT_PLAYER);
-
-        for (Entity entity : entities)
-        {
-            if ((entity instanceof PlayerEntity) == false)
-            {
-                entity.discard();
-            }
-        }
     }
 
     protected void queueFillCommandsForBox(IntBoundingBox box, boolean removeEntities)

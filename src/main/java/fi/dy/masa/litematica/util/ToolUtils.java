@@ -54,13 +54,10 @@ public class ToolUtils
         }
     }
 
-    /**
-     * Single player: the integrated server's scheduler (the task writes that world on its own thread, as upstream);
-     * on a server: the client's (the task sends vanilla fill/setblock commands through CommandToolGate).
-     */
+    /** Always the client's scheduler: the tasks send vanilla fill/setblock commands through CommandToolGate (single player too). */
     private static TaskScheduler scheduler(MinecraftClient mc)
     {
-        return mc.isIntegratedServerRunning() ? TaskScheduler.getInstanceServer() : TaskScheduler.getInstanceClient();
+        return TaskScheduler.getInstanceClient();
     }
 
     public static void deleteSelectionVolumes(boolean removeEntities, MinecraftClient mc)

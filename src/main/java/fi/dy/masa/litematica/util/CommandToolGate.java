@@ -40,7 +40,9 @@ public final class CommandToolGate
         if (Configs.Generic.COMMAND_TOOLS_ENABLED.getBooleanValue() == false) return tool + " is disabled (Litematica config: commandToolsEnabled)";
         if (mc.player == null || mc.world == null) return tool + " needs a world";
         if (EntityUtils.isCreativeMode(mc.player) == false) return tool + " works only in creative mode";
-        if (mc.player.hasPermissionLevel(2) == false) return tool + " needs operator permission (level 2) on this server";
+        if (mc.player.hasPermissionLevel(2) == false)
+            return mc.isIntegratedServerRunning() ? "enable cheats (or Open to LAN → Allow Cheats) to use paste/fill/delete"
+                : tool + " needs operator permission (level 2) on this server";
         return null;
     }
 

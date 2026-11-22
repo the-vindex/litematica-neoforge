@@ -24,17 +24,58 @@ public final class AuditedBuild
 
     private AuditedBuild() {}
 
+    /** Ids of operator-only blocks/items whose data must never travel to the server on an item. */
+    public static final java.util.Set<String> OPERATOR_IDS = java.util.Set.of("minecraft:command_block",
+        "minecraft:chain_command_block", "minecraft:repeating_command_block", "minecraft:command_block_minecart",
+        "minecraft:structure_block", "minecraft:jigsaw");
+
     /**
      * Whether a block entity's data may be copied onto an item (creative pick-block with Ctrl). Never for operator-only
-     * blocks: command blocks (their command NBT would reach the server in a creative slot packet), structure blocks and
-     * jigsaws.
+     * blocks (command, structure, jigsaw), and never when the data CONTAINS operator content at any depth (e.g. a chest
+     * or shulker holding a command block item with its command): the copied data would reach the server in a creative
+     * slot packet.
      */
-    public static boolean mayCopyBlockEntityData(net.minecraft.block.entity.BlockEntity te)
+    public static boolean mayCopyBlockEntityData(net.minecraft.block.entity.BlockEntity te, net.minecraft.registry.RegistryWrapper.WrapperLookup registries)
     {
-        return te != null
-            && !(te instanceof net.minecraft.block.entity.CommandBlockBlockEntity)
-            && !(te instanceof net.minecraft.block.entity.StructureBlockBlockEntity)
-            && !(te instanceof net.minecraft.block.entity.JigsawBlockEntity);
+        if (te == null
+            || te instanceof net.minecraft.block.entity.CommandBlockBlockEntity
+            || te instanceof net.minecraft.block.entity.StructureBlockBlockEntity
+            || te instanceof net.minecraft.block.entity.JigsawBlockEntity)
+        {
+            return false;
+        }
+        try
+        {
+            return containsOperatorData(te.createNbtWithIdentifyingData(registries), 0) == false;
+        }
+        catch (RuntimeException e)
+        {
+            return false;   // data that cannot be inspected is not copied
+        }
+    }
+
+    /** True when the NBT holds operator content anywhere: an operator id, or command-block keys (Command, LastOutput). */
+    public static boolean containsOperatorData(net.minecraft.nbt.NbtElement e, int depth)
+    {
+        if (e == null || depth > 64) return depth > 64;
+        if (e instanceof net.minecraft.nbt.NbtCompound c)
+        {
+            if (c.contains("Command") || c.contains("LastOutput")) return true;
+            for (String k : c.getKeys())
+            {
+                net.minecraft.nbt.NbtElement v = c.get(k);
+                if (v instanceof net.minecraft.nbt.NbtString str && OPERATOR_IDS.contains(str.asString())) return true;
+                if (containsOperatorData(v, depth + 1)) return true;
+            }
+            return false;
+        }
+        if (e instanceof net.minecraft.nbt.NbtList l)
+        {
+            for (net.minecraft.nbt.NbtElement v : l) if (containsOperatorData(v, depth + 1)) return true;
+            return false;
+        }
+        if (e instanceof net.minecraft.nbt.NbtString str) return OPERATOR_IDS.contains(str.asString());
+        return false;
     }
 
     public static void refuse(String what)

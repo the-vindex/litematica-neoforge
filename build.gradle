@@ -109,3 +109,13 @@ jar {
 
 remapJar.atAccessWideners.add("litematica.accesswidener")
 
+
+// Audited fork: the toolchain spec above selects vendor + major only; this pins the exact compiler build, so a different
+// JDK patch release fails the build instead of silently producing other bytecode.
+def pinnedCompiler = providers.gradleProperty("audited_compiler").getOrElse("21.0.13.1+2-LTS")
+tasks.withType(JavaCompile).configureEach { task ->
+	doFirst {
+		def v = task.javaCompiler.get().metadata.javaRuntimeVersion
+		if (v != pinnedCompiler) throw new GradleException("compiler " + v + " is not the pinned " + pinnedCompiler + " (audited reproducible build)")
+	}
+}

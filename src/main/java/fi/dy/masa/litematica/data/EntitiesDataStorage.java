@@ -65,11 +65,13 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
     }
 
     // Audited fork (Overseer): the server-side data-sync channel is deleted; block entity / entity data comes from the
-    // local world, and vanilla's block-entity NBT query only during an explicit schematic save (beginSaveScope /
-    // endSaveScope, a bounded budget per save). Rendering and other readers never queue a query; entity queries are gone.
+    // local world, and vanilla's block-entity NBT query only for positions an explicit schematic save registered itself
+    // (beginSaveScope / allowSaveQuery / endSaveScope, a bounded budget of distinct positions per save). Any other
+    // caller (rendering, the verifier overlay) never queues a query, even while a save runs; entity queries are gone.
     public static final int SAVE_QUERY_BUDGET = 1024, QUERIES_PER_TICK = 5;
     private int saveScopes;
     private int saveBudget;
+    private final Set<BlockPos> saveOwned = new java.util.HashSet<>();
 
     /** A schematic save starts: block-entity queries may be sent for it, up to SAVE_QUERY_BUDGET. */
     public synchronized void beginSaveScope()
@@ -81,16 +83,25 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
     public synchronized void endSaveScope()
     {
         this.saveScopes = Math.max(0, this.saveScopes - 1);
-        if (this.saveScopes == 0) { this.pendingBlockEntitiesQueue.clear(); this.pendingEntitiesQueue.clear(); }
+        if (this.saveScopes == 0) { this.pendingBlockEntitiesQueue.clear(); this.pendingEntitiesQueue.clear(); this.saveOwned.clear(); }
     }
 
     public synchronized boolean inSaveScope() { return this.saveScopes > 0; }
 
     public int pendingQueryCount() { return this.pendingBlockEntitiesQueue.size() + this.pendingEntitiesQueue.size(); }
 
-    private synchronized boolean mayQueue()
+    /** The running save task registers a block-entity position it needs (the only positions that may be queried). */
+    public synchronized void allowSaveQuery(BlockPos pos)
     {
-        if (this.saveScopes <= 0 || this.saveBudget <= 0) return false;
+        if (this.saveScopes > 0) this.saveOwned.add(pos.toImmutable());
+    }
+
+    /** A query for pos may be queued: a save is running, it registered pos, pos is not queued yet, budget left. */
+    private synchronized boolean mayQueue(BlockPos pos)
+    {
+        if (this.saveScopes <= 0 || this.saveOwned.contains(pos) == false) return false;
+        if (this.pendingBlockEntitiesQueue.contains(pos)) return false;   // no budget for duplicates
+        if (this.saveBudget <= 0) return false;
         this.saveBudget--;
         return true;
     }
@@ -508,7 +519,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             {
                 if (System.currentTimeMillis() - this.blockEntityCache.get(pos).getLeft() > (this.getCacheTimeout() / 4))
                 {
-                    if (this.mayQueue()) this.pendingBlockEntitiesQueue.add(pos);   // audited fork: save scope only
+                    if (this.mayQueue(pos)) this.pendingBlockEntitiesQueue.add(pos);   // audited fork: the save's own positions only
                 }
             }
 
@@ -524,7 +535,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
             if (DataManager.getInstance().hasIntegratedServer() == false &&
                 (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue()))
             {
-                if (this.mayQueue()) this.pendingBlockEntitiesQueue.add(pos);   // audited fork: save scope only
+                if (this.mayQueue(pos)) this.pendingBlockEntitiesQueue.add(pos);   // audited fork: the save's own positions only
             }
 
             return this.refreshBlockEntityFromWorld(this.getClientWorld(), pos);
@@ -837,6 +848,7 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
                 continue;
             }
 
+            this.allowSaveQuery(tePos);   // audited fork: this save's own request
             this.requestBlockEntity(world, tePos);
         }
 

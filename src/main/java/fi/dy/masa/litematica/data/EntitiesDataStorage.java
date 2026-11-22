@@ -283,6 +283,11 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
 
     private boolean shouldUseQuery()
     {
+        if (this.inSaveScope())
+        {
+            return true;   // audited fork: the save's own queries (the server answers operators only; others time out)
+        }
+
         if (this.hasOpStatus)
         {
 //            System.out.printf("shouldUseQuery: HAS OP\n");
@@ -479,7 +484,9 @@ public class EntitiesDataStorage implements IClientTickHandler, IDataSyncer
     {
         if (Configs.Generic.ENTITY_DATA_SYNC_BACKUP.getBooleanValue())
         {
-            return this.sentBackupPackets & this.receivedBackupPackets;
+            // Audited fork: a running save may start its own first query (no earlier response is needed); outside a
+            // save, nothing is queried anyway (mayQueue).
+            return (this.sentBackupPackets & this.receivedBackupPackets) || this.inSaveScope();
         }
 
         return false;
